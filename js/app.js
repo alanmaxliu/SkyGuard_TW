@@ -133,7 +133,7 @@ function initVersionUI() {
 function initServiceWorker() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker
-      .register('./sw.js?v=1.3.0')
+      .register('./sw.js?v=1.4.0')
       .then((reg) => {
         reg.update();
       })
@@ -362,7 +362,7 @@ async function runCoordinateCheck(lat, lng, label = '目前位置', updateUrl = 
   const report = await inspectLocationAirspace(state.lat, state.lng, 5000);
   state.lastReport = report;
 
-  const onlineTag = report.isOnline ? '民航局即時圖資' : '離線備援';
+  const onlineTag = report.isOnline ? '✅ 圖資已同步' : '離線備援';
   document.getElementById('txtCoordSub').textContent = `${label} (${state.lat.toFixed(4)}, ${state.lng.toFixed(4)})・${onlineTag}`;
 
   // 4. 繪製地圖多邊形與最近禁飛區導引線
@@ -654,12 +654,28 @@ function renderParkPortInfo(report) {
 }
 
 /**
- * 更新【4. 附近有沒有要塞（國防部 22 處）】
+ * 更新【4. 附近有沒有要塞／軍事營區（國防部 22 處要塞＋軍事營區條例）】
  */
 function renderFortressInfo(report) {
   const quickEl = document.getElementById('txtQuickFortress');
   const detailBox = document.getElementById('boxDetailFortress');
   const nearest = report.fortressReport.nearest;
+  const milHit = report.osmMilitaryHit;
+
+  if (milHit) {
+    const campName = milHit.info.name.replace('（軍事管制紅區）', '');
+    quickEl.style.color = '#f87171';
+    quickEl.textContent = `🚨 ${campName}`;
+    detailBox.innerHTML = `
+      <div class="hit-box purple">
+        <strong style="color:#f87171;">🚨 位於【${campName}】軍事營區／訓練中心範圍內！</strong><br/>
+        ${milHit.info.description}<br/>
+        <span style="color:#fca5a5;">罰則：${milHit.info.penalty}</span>
+      </div>
+    `;
+    return;
+  }
+
   if (!nearest) return;
 
   if (nearest.inCore) {

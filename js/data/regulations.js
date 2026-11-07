@@ -159,6 +159,12 @@ export const GENERAL_CAA_RULES = {
  */
 export const PRESET_LOCATIONS = [
   {
+    name: '合歡山武嶺（山寒地訓練中心軍事禁飛區＋太魯閣國家公園）',
+    lat: 24.1425,
+    lng: 121.2806,
+    desc: '測試陸軍航特部武嶺山寒地訓練中心軍事管制紅區與太魯閣國家公園重疊區'
+  },
+  {
     name: '基隆外木山（內木山要塞＋商港鄰近）',
     lat: 25.1618,
     lng: 121.7245,

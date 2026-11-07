@@ -1,4 +1,4 @@
-const CACHE_NAME = 'skyguard-tw-v1.3.0';
+const CACHE_NAME = 'skyguard-tw-v1.4.0';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
