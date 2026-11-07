@@ -1,0 +1,21 @@
+{
+  "name": "空拍即查通 SkyGuard TW｜台灣無人機禁限航區與要塞雷達",
+  "short_name": "空拍即查通",
+  "description": "現場一鍵定位即查：這裡能不能飛、最高飛多高、附近禁飛區方向距離、國家公園與商港申請規範、國防部 22 處要塞堡壘與今日日落時間。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b1120",
+  "theme_color": "#0b1120",
+  "lang": "zh-TW",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+
