@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>空拍即查通｜台灣空拍規定・禁飛區・國家公園・22處要塞與日落查詢</title>
-  <meta name="description" content="現場打開手機按一下定位：立即看這裡能不能飛、最高飛多高、附近哪個方向多遠有禁飛區、是不是國家公園去哪申請、附近有沒有要塞、今天幾點日落。" />
+  <title>空拍即查通 v1.3.0｜台灣空拍規定・禁飛區・國家公園・22處要塞與日落查詢</title>
+  <meta name="description" content="現場打開手機按一下定位：全螢幕地圖立即看這裡能不能飛、最高飛多高、附近哪個方向多遠有禁飛區、是不是國家公園去哪申請、附近有沒有要塞、今天幾點日落。" />
   <meta name="theme-color" content="#0f172a" />
 
   <!-- iOS / Android 加到主畫面 App 支援 -->
@@ -23,202 +23,172 @@
     crossorigin=""
   />
 
-  <link rel="stylesheet" href="./css/style.css?v=1.2.0" />
+  <link rel="stylesheet" href="./css/style.css?v=1.3.0" />
 </head>
 <body>
-  <!-- 頂部精簡導航列 -->
-  <header class="top-bar">
-    <div class="brand-box">
-      <img src="./assets/icon.svg" alt="空拍即查通" class="app-logo" />
-      <div>
-        <div class="title-line">
-          <h1 class="app-title">空拍即查通</h1>
-          <button id="btnVersionInfo" class="version-pill" type="button" title="點擊查看版本更新紀錄">v1.2.0</button>
-          <span class="author-tag">劉建良@2026 免費軟體</span>
-        </div>
-        <p id="deviceModeText" class="device-subtitle">正在偵測裝置與位置...</p>
-      </div>
+  <!-- 1. 極簡頂部單行標題列（固定高度 44px，絕不換行推擠） -->
+  <header class="compact-header">
+    <div class="header-left">
+      <img src="./assets/icon.svg" alt="Icon" class="mini-logo" />
+      <span class="app-name">空拍即查通</span>
+      <button id="btnVersionBadge" class="ver-badge" type="button" title="點擊查看版本與更新">v1.3.0</button>
+      <span class="credit-text">劉建良@2026 免費軟體</span>
     </div>
-    <div class="top-actions">
-      <button id="btnShareLink" class="btn-top-action" type="button">分享位置</button>
-      <button id="btnAddHome" class="btn-top-action" type="button">加到主畫面</button>
+    <div class="header-right">
+      <button id="btnShare" class="btn-header-sm" type="button">分享</button>
+      <button id="btnAddDesktop" class="btn-header-sm" type="button">加桌面</button>
     </div>
   </header>
 
-  <!-- 主內容區（手機單頁分頁切換 / 電腦左右雙欄） -->
-  <main class="app-main">
-    <!-- 左欄／分頁 1：現場速查（5 大問題一目了然） -->
-    <section id="view-check" class="view-panel active">
-      <!-- 定位主按鈕與快速切換列 -->
-      <div class="locate-card">
-        <button id="btnLocateNow" class="btn-locate-big" type="button">
-          <span class="locate-icon">📍</span>
-          <span id="btnLocateLabel">點我定位目前位置</span>
-        </button>
+  <!-- 2. 全螢幕地圖主視覺區 -->
+  <main class="map-stage">
+    <!-- 地圖上方懸浮定位與快速工具列 -->
+    <div class="map-floating-bar">
+      <button id="btnLocateMe" class="btn-locate-pill" type="button">
+        <span id="txtLocateBtn">📍 定位目前位置</span>
+      </button>
+      <select id="selectQuickSpot" class="quick-spot-select" aria-label="切換地點">
+        <option value="">⚡ 切換地點...</option>
+      </select>
+      <button id="btnInputCoord" class="btn-coord-pill" type="button">座標</button>
+    </div>
 
-        <div class="quick-tools-row">
-          <select id="selectPresetSpot" class="spot-select" aria-label="快速切換知名空拍點">
-            <option value="">⚡ 切換其他地點查看...</option>
-          </select>
-          <button id="btnOpenCoordModal" class="btn-tool-sm" type="button">輸入座標</button>
-          <button id="btnJumpMap" class="btn-tool-sm mobile-only" type="button">看地圖</button>
-        </div>
+    <!-- 實際 Leaflet 全螢幕地圖容器 -->
+    <div id="mapContainer" class="full-map"></div>
 
-        <div class="coord-bar">
-          <span id="txtCoordInfo">定位準備中...</span>
-          <span id="txtDataStatus" class="status-pill">連線中</span>
-        </div>
-      </div>
+    <!-- 地圖右下角回到中心按鈕與迷你圖例 -->
+    <button id="btnRecenterMap" class="fab-recenter" type="button" title="回到定位點">🎯</button>
+    <div class="mini-map-legend">
+      <span><i class="lg-dot lg-red"></i>禁飛</span>
+      <span><i class="lg-dot lg-yellow"></i>限高60m</span>
+      <span><i class="lg-dot lg-orange"></i>國家公園/商港</span>
+      <span><i class="lg-dot lg-purple"></i>22處要塞</span>
+    </div>
 
-      <!-- 重點 1：這裡能不能飛？最高飛多高？ -->
-      <article id="heroVerdictCard" class="summary-hero hero-loading">
-        <div class="hero-top-row">
-          <div>
-            <span id="txtZoneBadge" class="zone-badge">查詢中</span>
-            <h2 id="txtMainVerdict" class="hero-title">正在讀取此位置的空拍規定...</h2>
-          </div>
-          <div class="height-box">
-            <span class="height-label">最高可飛高度</span>
-            <strong id="txtHeightLimit" class="height-num">--</strong>
-            <span id="txtHeightFeet" class="height-sub">公尺</span>
-          </div>
-        </div>
-        <p id="txtVerdictDesc" class="hero-desc">正在比對民航局禁限航區、臨時禁飛、商港、國家公園與國防部 22 處要塞...</p>
-        <div id="hitZonesList" class="hit-zones-wrap"></div>
-      </article>
+    <!-- 3. 底部可展開抽屜式資訊卡 (Bottom Sheet) -->
+    <section id="bottomSheet" class="bottom-sheet">
+      <!-- 抽屜頂部拉柄與五大問題精簡總覽（預設常駐顯示於畫面底部，不擋地圖） -->
+      <div class="sheet-summary-area" id="sheetSummaryHeader">
+        <div class="sheet-drag-handle"></div>
 
-      <!-- 重點 2 & 3 & 4 & 5：四宮格大字重點速看 -->
-      <div class="four-grid">
-        <!-- 今天幾點日落 -->
-        <article class="info-card">
-          <div class="card-head">
-            <span class="card-icon">🌇</span>
-            <h3 class="card-heading">今天幾點日落？（日落後禁飛）</h3>
-          </div>
-          <div class="sun-main-row">
-            <div>
-              <div class="big-stat" id="txtSunsetVal">--:--</div>
-              <div class="stat-caption" id="txtSunriseCaption">今日日出 --:--</div>
+        <!-- 第一行：能不能飛＋最高飛多高＋展開按鈕 -->
+        <div class="summary-main-line">
+          <div class="verdict-left">
+            <span id="pillZoneStatus" class="status-tag-lg">定位中</span>
+            <div class="verdict-titles">
+              <h2 id="txtSummaryTitle" class="summary-headline">正在取得位置規定...</h2>
+              <p id="txtCoordSub" class="summary-coord-sub">點地圖任意處可直接查詢該點</p>
             </div>
-            <div id="txtSunRemainBadge" class="sun-status-pill">計算中</div>
           </div>
-        </article>
-
-        <!-- 附近有沒有要塞 -->
-        <article class="info-card">
-          <div class="card-head">
-            <span class="card-icon">🪖</span>
-            <h3 class="card-heading">附近有沒有要塞？（國防部 22 處）</h3>
+          <div class="verdict-right">
+            <div class="alt-badge-box">
+              <span class="alt-small-label">最高限高</span>
+              <strong id="txtSummaryAlt" class="alt-big-num">--</strong>
+            </div>
+            <button id="btnToggleSheet" class="btn-expand-sheet" type="button">▲ 詳情</button>
           </div>
-          <div id="boxFortressQuick" class="quick-body">
-            查詢中...
+        </div>
+
+        <!-- 第二行：四格一目了然（附近禁飛方向距離、日落時間、國家公園、軍事要塞） -->
+        <div class="quick-4-pills">
+          <div class="q-pill" id="pillNearbyZone" title="點擊在地圖標示最近禁飛區方向">
+            <span class="q-pill-label">🧭 附近禁飛區</span>
+            <strong id="txtQuickNearby" class="q-pill-val">掃描中...</strong>
           </div>
-        </article>
-      </div>
-
-      <!-- 是不是國家公園／商港、去哪申請、要提前幾天 -->
-      <article class="info-card">
-        <div class="card-head">
-          <span class="card-icon">🏞️</span>
-          <h3 class="card-heading">是不是國家公園或商港？去哪申請？要提前幾天？</h3>
-        </div>
-        <div id="boxParkPortQuick" class="quick-body">
-          查詢中...
-        </div>
-      </article>
-
-      <!-- 附近哪個方向、多遠有禁飛區 -->
-      <article class="info-card">
-        <div class="card-head">
-          <span class="card-icon">🧭</span>
-          <h3 class="card-heading">附近哪個方向、多遠有禁飛／限航區？</h3>
-          <span class="head-note">點項目可在地圖看位置</span>
-        </div>
-        <div id="txtNearestAlert" class="nearest-banner">正在掃描周邊 5 公里空域...</div>
-        <div id="listNearbyZones" class="nearby-clean-list"></div>
-      </article>
-
-      <footer class="page-footer">
-        <div>
-          <strong>劉建良@2026 免費軟體</strong>｜空拍即查通
-          <span id="txtFooterVersion" class="footer-ver-tag">版號：v1.2.0 (2026-11-07 21:06)</span>
-        </div>
-        <p>資料來源：交通部民航局圖資、內政部國家公園署、航港局及國防部公告要塞資料。實際飛行請以官方最新正式公告為準。</p>
-      </footer>
-    </section>
-
-    <!-- 右欄／分頁 2：互動空域地圖 -->
-    <section id="view-map" class="view-panel map-panel">
-      <div class="map-top-tip">
-        <span>👆 直接點地圖上任何地方，就能查那一點能不能飛</span>
-        <button id="btnMapBackToMe" class="btn-map-mini" type="button">回到目前位置</button>
-      </div>
-      <div id="mapContainer" class="map-canvas"></div>
-      <!-- 地圖底部即時狀態浮動條（手機看地圖時直接顯示結果） -->
-      <div class="map-bottom-bar">
-        <div class="map-bar-info">
-          <span id="mapBarBadge" class="mini-badge">--</span>
-          <strong id="mapBarTitle">點選地圖查看規定</strong>
-        </div>
-        <button id="btnMapToDetail" class="btn-map-detail mobile-only" type="button">看詳細規定</button>
-      </div>
-    </section>
-
-    <!-- 分頁 3：全台國家公園與商港申請懶人包 -->
-    <section id="view-parks" class="view-panel sub-page">
-      <div class="sub-page-header">
-        <h2>🏞️ 國家公園 ＆ 商港申請規定懶人包</h2>
-        <p>整理全台 9 座國家公園、壽山國家自然公園與商港的<strong>提前申請天數</strong>與<strong>官方線上申請連結</strong>：</p>
-      </div>
-      <div id="boxPortRuleFull" class="port-warning-card"></div>
-      <div id="gridAllParks" class="cards-list"></div>
-    </section>
-
-    <!-- 分頁 4：國防部公告 22 處要塞清單 -->
-    <section id="view-fortresses" class="view-panel sub-page">
-      <div class="sub-page-header">
-        <h2>🪖 國防部公告全台 22 處要塞清單</h2>
-        <p>依《要塞堡壘地帶法》規定，要塞範圍與上空<strong>嚴禁未經許可空拍、錄影或攝影</strong>。點選下方任一處可直接在地圖查看位置：</p>
-        <div class="chip-row">
-          <button class="region-chip active" data-region="all" type="button">全部 (22)</button>
-          <button class="region-chip" data-region="臺灣本島" type="button">臺灣本島 (9)</button>
-          <button class="region-chip" data-region="澎湖地區" type="button">澎湖 (1)</button>
-          <button class="region-chip" data-region="金門" type="button">金門與烏坵 (12)</button>
+          <div class="q-pill" id="pillSunset">
+            <span class="q-pill-label">🌇 今天幾點日落</span>
+            <strong id="txtQuickSunset" class="q-pill-val">--:--</strong>
+          </div>
+          <div class="q-pill" id="pillPark">
+            <span class="q-pill-label">🏞️ 國家公園/商港</span>
+            <strong id="txtQuickPark" class="q-pill-val">檢查中...</strong>
+          </div>
+          <div class="q-pill" id="pillFortress">
+            <span class="q-pill-label">🪖 附近有無要塞</span>
+            <strong id="txtQuickFortress" class="q-pill-val">檢查中...</strong>
+          </div>
         </div>
       </div>
-      <div id="gridAllFortresses" class="cards-list"></div>
+
+      <!-- 展開後的詳細內容區（點「▲ 詳情」或四格標籤時滑開） -->
+      <div class="sheet-detail-body">
+        <!-- 抽屜內部分頁切換 -->
+        <div class="sheet-tabs">
+          <button class="sheet-tab active" data-tab="tab-current" type="button">📋 此處完整規定</button>
+          <button class="sheet-tab" data-tab="tab-parks" type="button">🏞️ 國家公園申請</button>
+          <button class="sheet-tab" data-tab="tab-forts" type="button">🪖 22處要塞</button>
+          <button id="btnCollapseSheet" class="btn-collapse-map" type="button">▼ 收合看地圖</button>
+        </div>
+
+        <!-- 分頁 1：目前座標 5 大規定完整詳情 -->
+        <div id="tab-current" class="sheet-tab-content active">
+          <!-- 1. 所在地重疊空域規定 -->
+          <div class="detail-section">
+            <h3 class="detail-sec-title">1. 這裡能不能飛？最高飛多高？</h3>
+            <p id="txtDetailVerdictDesc" class="detail-desc"></p>
+            <div id="listActiveHitZones" class="detail-hit-list"></div>
+          </div>
+
+          <!-- 2. 附近哪個方向、多遠有禁飛區 -->
+          <div class="detail-section">
+            <h3 class="detail-sec-title">2. 附近哪個方向、多遠有禁飛區？（點項目可看地圖方向線）</h3>
+            <div id="txtDetailNearestBanner" class="detail-alert-strip"></div>
+            <div id="listDetailNearby" class="detail-nearby-list"></div>
+          </div>
+
+          <!-- 3. 是不是國家公園或商港、去哪申請、要提前幾天 -->
+          <div class="detail-section">
+            <h3 class="detail-sec-title">3. 是不是國家公園或商港？去哪申請？要提前幾天？</h3>
+            <div id="boxDetailParkPort"></div>
+          </div>
+
+          <!-- 4. 附近有沒有要塞（國防部 22 處） -->
+          <div class="detail-section">
+            <h3 class="detail-sec-title">4. 附近有沒有軍事要塞？（國防部公告 22 處）</h3>
+            <div id="boxDetailFortress"></div>
+          </div>
+
+          <!-- 5. 今天幾點日落 -->
+          <div class="detail-section">
+            <h3 class="detail-sec-title">5. 今天日出與日落時間（日落後禁止夜飛）</h3>
+            <div id="boxDetailSun" class="detail-sun-box"></div>
+          </div>
+
+          <div class="sheet-footer">
+            <strong>劉建良@2026 免費軟體</strong>｜<span id="txtFooterVer">版號：v1.3.0</span>
+            <p>資料來源：交通部民航局圖資、國家公園署、航港局及國防部公告要塞。實際飛行請以官方最新正式公告為準。</p>
+          </div>
+        </div>
+
+        <!-- 分頁 2：全台國家公園與商港申請懶人包 -->
+        <div id="tab-parks" class="sheet-tab-content">
+          <div id="boxAllPortRule" class="port-rule-banner"></div>
+          <div id="listAllParks" class="directory-list"></div>
+        </div>
+
+        <!-- 分頁 3：全台 22 處要塞清單 -->
+        <div id="tab-forts" class="sheet-tab-content">
+          <div class="fort-filter-bar">
+            <button class="fort-chip active" data-region="all" type="button">全部 (22)</button>
+            <button class="fort-chip" data-region="臺灣本島" type="button">本島 (9)</button>
+            <button class="fort-chip" data-region="澎湖地區" type="button">澎湖 (1)</button>
+            <button class="fort-chip" data-region="金門" type="button">金門與烏坵 (12)</button>
+          </div>
+          <div id="listAllForts" class="directory-list"></div>
+        </div>
+      </div>
     </section>
   </main>
 
-  <!-- 手機版底部固定 App 導航列（大按鈕、單手好按） -->
-  <nav class="bottom-nav" aria-label="功能切換">
-    <button class="nav-item active" data-view="view-check" type="button">
-      <span class="nav-icon">📍</span>
-      <span class="nav-label">現場速查</span>
-    </button>
-    <button class="nav-item" data-view="view-map" type="button">
-      <span class="nav-icon">🗺️</span>
-      <span class="nav-label">空域地圖</span>
-    </button>
-    <button class="nav-item" data-view="view-parks" type="button">
-      <span class="nav-icon">🏞️</span>
-      <span class="nav-label">國家公園申請</span>
-    </button>
-    <button class="nav-item" data-view="view-fortresses" type="button">
-      <span class="nav-icon">🪖</span>
-      <span class="nav-label">22處要塞</span>
-    </button>
-  </nav>
-
-  <!-- 手動輸入座標彈窗 -->
+  <!-- 輸入座標彈窗 -->
   <div id="modalCoord" class="modal-mask hidden" role="dialog" aria-modal="true">
     <div class="modal-box">
       <div class="modal-head">
-        <h3>輸入經緯度座標</h3>
+        <h3>🧭 輸入經緯度座標</h3>
         <button id="btnCloseCoord" class="btn-close" type="button">✕</button>
       </div>
-      <p class="modal-hint">可直接貼上 Google 地圖複製的座標（例如：<code>25.0338, 121.5645</code>）：</p>
-      <input type="text" id="inputPasteCoord" class="text-input" placeholder="貼上 緯度, 經度（如 25.1592, 121.7261）" />
+      <p class="modal-hint">可直接貼上 Google 地圖座標（例如：<code>22.6029, 120.3030</code>）：</p>
+      <input type="text" id="inputPasteCoord" class="text-input" placeholder="貼上 緯度, 經度" />
       <div class="input-row-2">
         <div>
           <label class="input-label" for="inputLat">緯度 (N)</label>
@@ -229,11 +199,11 @@
           <input type="number" id="inputLng" class="text-input" step="0.0001" />
         </div>
       </div>
-      <button id="btnConfirmCoord" class="btn-locate-big" type="button" style="margin-top:12px;">查詢這個座標</button>
+      <button id="btnConfirmCoord" class="btn-primary-full" type="button">查詢這個位置</button>
     </div>
   </div>
 
-  <!-- 加到手機主畫面教學彈窗 -->
+  <!-- 加到主畫面教學彈窗 -->
   <div id="modalAddHome" class="modal-mask hidden" role="dialog" aria-modal="true">
     <div class="modal-box">
       <div class="modal-head">
@@ -241,27 +211,27 @@
         <button id="btnCloseAddHome" class="btn-close" type="button">✕</button>
       </div>
       <div class="guide-block">
-        <h4>🍎 iPhone (Safari 瀏覽器)</h4>
-        <p>1. 點畫面最下方中間的「<strong>分享</strong>」圖示（方框向上箭頭）。<br />2. 往下滑點選「<strong>加入主畫面</strong>」再點右上角「新增」即可。</p>
+        <h4>🍎 iPhone (請用 Safari 瀏覽器打開)</h4>
+        <p>1. 點下方中間的「<strong>分享</strong>」按鈕。<br />2. 往下滑點「<strong>加入主畫面</strong>」即可。</p>
       </div>
       <div class="guide-block">
-        <h4>🤖 Android 手機 (Chrome 瀏覽器)</h4>
-        <p>1. 點右上角「<strong>⋮</strong>」選單。<br />2. 點選「<strong>加到主畫面</strong>」或「<strong>安裝應用程式</strong>」即可。</p>
+        <h4>🤖 Android 手機 (請用 Chrome 瀏覽器打開)</h4>
+        <p>1. 點右上角「<strong>⋮</strong>」選單。<br />2. 點「<strong>加到主畫面</strong>」或「<strong>安裝應用程式</strong>」即可。</p>
       </div>
-      <button id="btnDirectInstall" class="btn-locate-big hidden" type="button" style="margin-bottom:8px;">立即安裝到手機桌面</button>
-      <button id="btnGotItAddHome" class="btn-tool-sm" type="button" style="width:100%;padding:10px;">好，我知道了</button>
+      <button id="btnDirectInstall" class="btn-primary-full hidden" type="button" style="margin-bottom:8px;">立即安裝到桌面</button>
+      <button id="btnGotItAddHome" class="btn-secondary-full" type="button">好，我知道了</button>
     </div>
   </div>
 
-  <!-- 版本管控與更新紀錄彈窗 -->
+  <!-- 版本與強制更新彈窗 -->
   <div id="modalVersion" class="modal-mask hidden" role="dialog" aria-modal="true">
     <div class="modal-box">
       <div class="modal-head">
-        <h3>📦 版本資訊與更新紀錄</h3>
+        <h3>📦 版本資訊（劉建良@2026 免費軟體）</h3>
         <button id="btnCloseVersion" class="btn-close" type="button">✕</button>
       </div>
       <div id="versionChangelogBody" class="changelog-body"></div>
-      <button id="btnForceRefresh" class="btn-locate-big" type="button" style="margin-top:10px;">🔄 強制清除快取並更新最新版</button>
+      <button id="btnForceRefresh" class="btn-primary-full" type="button" style="margin-top:10px;">🔄 強制清除快取並載入最新版</button>
     </div>
   </div>
 
@@ -274,6 +244,6 @@
     crossorigin=""
   ></script>
 
-  <script type="module" src="./js/app.js?v=1.2.0"></script>
+  <script type="module" src="./js/app.js?v=1.3.0"></script>
 </body>
 </html>

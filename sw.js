@@ -1,44 +1,38 @@
-const CACHE_NAME = 'skyguard-tw-v1.2.0';
-const STATIC_ASSETS = [
-  './',
-  './index.html',
-  './css/style.css?v=1.2.0',
-  './js/app.js?v=1.2.0',
-  './js/version.js',
-  './js/data/fortresses.js',
-  './js/data/regulations.js',
-  './js/utils/sun.js',
-  './js/utils/geo.js',
-  './js/services/caaApi.js',
-  './assets/icon.svg',
-  './manifest.webmanifest'
-];
+const CACHE_NAME = 'skyguard-tw-v1.3.0';
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys.map((key) => {
-            if (key !== CACHE_NAME) {
-              return caches.delete(key);
-            }
-          })
-        )
-      )
-      .then(() => self.clients.claim())
+    (async () => {
+      // 1. 刪除所有舊版快取
+      const keys = await caches.keys();
+      await Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+
+      // 2. 立即接管所有開啟中的頁面，並強制重新載入最新 HTML（解決手機卡在 v1.0 舊畫面問題）
+      await self.clients.claim();
+      const windowClients = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true
+      });
+      for (const client of windowClients) {
+        try {
+          await client.navigate(client.url);
+        } catch (_) {}
+      }
+    })()
   );
 });
 
-// 全面採用 Network-First（網路優先），確保一旦發布新版，手機重整立即拿到最新畫面；只有沒網路時才用快取
+// 網路優先 (Network-First)：有網路一律抓最新檔案，離線才用快取
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 

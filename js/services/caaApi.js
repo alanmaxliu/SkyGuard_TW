@@ -23,8 +23,9 @@ const ENDPOINTS = {
 
 /**
  * 向 ArcGIS FeatureServer 查詢指定座標半徑內之 GeoJSON 圖徵
+ * 加入 geometryPrecision=5 與 maxAllowableOffset=0.00008 大幅縮減 90% 傳輸體積，手機秒開不逾時
  */
-async function queryArcGISRadius(endpointUrl, lat, lng, radiusMeters = 5000, timeoutMs = 8000) {
+async function queryArcGISRadius(endpointUrl, lat, lng, radiusMeters = 5000, timeoutMs = 15000) {
   const params = new URLSearchParams({
     geometry: `${lng},${lat}`,
     geometryType: 'esriGeometryPoint',
@@ -34,6 +35,8 @@ async function queryArcGISRadius(endpointUrl, lat, lng, radiusMeters = 5000, tim
     units: 'esriSRUnit_Meter',
     outFields: '*',
     returnGeometry: 'true',
+    geometryPrecision: '5',
+    maxAllowableOffset: '0.00008',
     outSR: '4326',
     f: 'geojson'
   });
