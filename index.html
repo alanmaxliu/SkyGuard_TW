@@ -23,7 +23,7 @@
     crossorigin=""
   />
 
-  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="stylesheet" href="./css/style.css?v=1.2.0" />
 </head>
 <body>
   <!-- 頂部精簡導航列 -->
@@ -33,6 +33,7 @@
       <div>
         <div class="title-line">
           <h1 class="app-title">空拍即查通</h1>
+          <button id="btnVersionInfo" class="version-pill" type="button" title="點擊查看版本更新紀錄">v1.2.0</button>
           <span class="author-tag">劉建良@2026 免費軟體</span>
         </div>
         <p id="deviceModeText" class="device-subtitle">正在偵測裝置與位置...</p>
@@ -138,7 +139,10 @@
       </article>
 
       <footer class="page-footer">
-        <div><strong>劉建良@2026 免費軟體</strong>｜空拍即查通</div>
+        <div>
+          <strong>劉建良@2026 免費軟體</strong>｜空拍即查通
+          <span id="txtFooterVersion" class="footer-ver-tag">版號：v1.2.0 (2026-11-07 21:06)</span>
+        </div>
         <p>資料來源：交通部民航局圖資、內政部國家公園署、航港局及國防部公告要塞資料。實際飛行請以官方最新正式公告為準。</p>
       </footer>
     </section>
@@ -249,6 +253,18 @@
     </div>
   </div>
 
+  <!-- 版本管控與更新紀錄彈窗 -->
+  <div id="modalVersion" class="modal-mask hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>📦 版本資訊與更新紀錄</h3>
+        <button id="btnCloseVersion" class="btn-close" type="button">✕</button>
+      </div>
+      <div id="versionChangelogBody" class="changelog-body"></div>
+      <button id="btnForceRefresh" class="btn-locate-big" type="button" style="margin-top:10px;">🔄 強制清除快取並更新最新版</button>
+    </div>
+  </div>
+
   <div id="toastMsg" class="toast-box hidden"></div>
 
   <!-- Leaflet JS -->
@@ -258,6 +274,6 @@
     crossorigin=""
   ></script>
 
-  <script type="module" src="./js/app.js"></script>
+  <script type="module" src="./js/app.js?v=1.2.0"></script>
 </body>
 </html>

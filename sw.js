@@ -1,9 +1,10 @@
-const CACHE_NAME = 'skyguard-tw-v1.1.0';
+const CACHE_NAME = 'skyguard-tw-v1.2.0';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './css/style.css',
-  './js/app.js',
+  './css/style.css?v=1.2.0',
+  './js/app.js?v=1.2.0',
+  './js/version.js',
   './js/data/fortresses.js',
   './js/data/regulations.js',
   './js/utils/sun.js',
@@ -14,58 +15,42 @@ const STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys.map((key) => {
+            if (key !== CACHE_NAME) {
+              return caches.delete(key);
+            }
+          })
+        )
       )
-    )
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
+// 全面採用 Network-First（網路優先），確保一旦發布新版，手機重整立即拿到最新畫面；只有沒網路時才用快取
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+  if (event.request.method !== 'GET') return;
 
-  // 對民航局 GIS API 採 Network First，失敗時才回退快取
-  if (url.hostname.includes('caa.gov.tw')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((res) => {
+  event.respondWith(
+    fetch(event.request)
+      .then((res) => {
+        if (res && res.status === 200) {
           const clone = res.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          return res;
-        })
-        .catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
-  // 靜態資源採 Stale-While-Revalidate
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const networkFetch = fetch(event.request)
-        .then((res) => {
-          if (res && res.status === 200 && event.request.method === 'GET') {
-            const clone = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return res;
-        })
-        .catch(() => cached);
-      return cached || networkFetch;
-    })
+        }
+        return res;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
-

@@ -3,6 +3,7 @@
  * 支援：電腦／筆電自動以連網位置定位、手機使用 GPS 定位、台灣白話直覺式介面
  */
 
+import { VERSION_INFO } from './version.js';
 import { FORTRESS_LIST, FORTRESS_LAW_INFO } from './data/fortresses.js';
 import {
   NATIONAL_PARK_RULES,
@@ -43,6 +44,7 @@ const state = {
 
 document.addEventListener('DOMContentLoaded', () => {
   document.body.classList.add('mode-check');
+  initVersionControlUI();
   initServiceWorker();
   initDeviceModeUI();
   initMap();
@@ -69,6 +71,70 @@ document.addEventListener('DOMContentLoaded', () => {
     triggerComputerNetworkLocate();
   }
 });
+
+/**
+ * 初始化版本號顯示與更新紀錄對話框
+ */
+function initVersionControlUI() {
+  const btnVer = document.getElementById('btnVersionInfo');
+  const txtFooterVer = document.getElementById('txtFooterVersion');
+  const modalVer = document.getElementById('modalVersion');
+  const bodyEl = document.getElementById('versionChangelogBody');
+
+  if (btnVer) btnVer.textContent = VERSION_INFO.version;
+  if (txtFooterVer) {
+    txtFooterVer.textContent = `版號：${VERSION_INFO.version} (${VERSION_INFO.buildDate})`;
+  }
+
+  if (bodyEl) {
+    bodyEl.innerHTML = VERSION_INFO.changelog
+      .map(
+        (log) => `
+        <div class="ver-block">
+          <div class="ver-block-head">
+            <span>版本 ${log.version}</span>
+            <span style="color:#94a3b8;font-weight:600;">${log.date}</span>
+          </div>
+          <ul>
+            ${log.items.map((item) => `<li>${item}</li>`).join('')}
+          </ul>
+        </div>
+      `
+      )
+      .join('');
+  }
+
+  if (btnVer && modalVer) {
+    btnVer.addEventListener('click', () => modalVer.classList.remove('hidden'));
+  }
+
+  const btnClose = document.getElementById('btnCloseVersion');
+  if (btnClose && modalVer) {
+    btnClose.addEventListener('click', () => modalVer.classList.add('hidden'));
+  }
+
+  const btnForce = document.getElementById('btnForceRefresh');
+  if (btnForce) {
+    btnForce.addEventListener('click', async () => {
+      showToast('🔄 正在清除舊版快取並載入最新版...');
+      try {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const r of regs) {
+            await r.unregister();
+          }
+        }
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          for (const k of keys) {
+            await caches.delete(k);
+          }
+        }
+      } catch (_) {}
+      window.location.href = `${window.location.pathname}?t=${Date.now()}`;
+    });
+  }
+}
 
 /**
  * 註冊 Service Worker 並強制更新舊版快取

@@ -90,6 +90,60 @@ body {
   border-radius: 999px;
 }
 
+.version-pill {
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #042f2e;
+  background: #10b981;
+  border: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.footer-ver-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: rgba(16, 185, 129, 0.16);
+  color: #34d399;
+  font-weight: 800;
+  font-size: 0.76rem;
+}
+
+.changelog-body {
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+.ver-block {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+}
+
+.ver-block-head {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 900;
+  color: #34d399;
+  margin-bottom: 4px;
+}
+
+.ver-block ul {
+  padding-left: 18px;
+  color: var(--text-sub);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
 .device-subtitle {
   font-size: 0.75rem;
   color: var(--text-muted);
